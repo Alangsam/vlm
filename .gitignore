@@ -1,0 +1,56 @@
+# --- Python basics ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+
+# --- Virtual envs ---
+.venv/
+venv/
+env/
+vlm/              # your current venv folder name
+ENV/
+pip-wheel-metadata/
+
+# --- OS/editor noise ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- Build / dist ---
+build/
+dist/
+site/
+htmlcov/
+
+# --- Data/model caches (keep large blobs out of git) ---
+data/
+datasets/
+outputs/
+logs/
+checkpoints/
+models/
+*.pt
+*.bin
+*.onnx
+*.safetensors
+.cache/
+huggingface/
+HF_HOME/
+TRANSFORMERS_CACHE/
+TORCH_HOME/
+
+# --- Secrets & env ---
+.env
+.env.*
+*.secret
+*.key
+*.pem
