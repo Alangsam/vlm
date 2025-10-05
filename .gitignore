@@ -1,3 +1,7 @@
+#Model files
+.models/
+*.gguf
+
 # --- Python basics ---
 __pycache__/
 *.pyc
