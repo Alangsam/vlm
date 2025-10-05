@@ -41,7 +41,7 @@ htmlcov/
 data/
 datasets/
 outputs/
-samples/
+
 logs/
 checkpoints/
 models/
