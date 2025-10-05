@@ -21,3 +21,7 @@ pip3 install --force torch-2.8.0-cp310-cp310-linux_aarch64.whl
 pip3 install --force torchvision-0.23.0-cp310-cp310-linux_aarch64.whl 
 pip3 install --force torchaudio-2.8.0-cp310-cp310-linux_aarch64.whl 
 ```
+## sample img
+```bash
+wget https://www.pawlovetreats.com/cdn/shop/articles/pembroke-welsh-corgi-puppy_1000x.jpg?v=1628638716
+```
