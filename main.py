@@ -1,98 +1,89 @@
-# main.py — Moondream2 with an explicit VRAM cap (Jetson-safe)
+# main.py — minimal runners (exactly one simple path for each backend)
+# Usage:
+#   python main.py --backend obsidian --image <path> "prompt"
+#   python main.py --backend moondream --image <path> "prompt"
+#
+# Requirements:
+#   pip install pillow
+#   For Obsidian: pip install llama-cpp-python
+#                 export OBS_GGUF=/abs/path/to/obsidian-*.gguf
+#                 export OBS_MMPROJ=/abs/path/to/mmproj-obsidian-f16.gguf
+#   For Moondream: pip install torch transformers safetensors
 
-import sys, os
+import os, sys
 from PIL import Image
-import torch
-from transformers import AutoModelForCausalLM
 
-MODEL_ID = "vikhyatk/moondream2"
+def usage():
+    print("Usage: python main.py --backend {obsidian|moondream} --image <path> [prompt]")
+    raise SystemExit(1)
 
-def downscale_max_dim(img: Image.Image, max_dim: int) -> Image.Image:
-    if max_dim <= 0:
-        return img
-    w, h = img.size
-    if max(w, h) <= max_dim:
-        return img
-    if w >= h:
-        new_w, new_h = max_dim, int(h * (max_dim / w))
-    else:
-        new_h, new_w = max_dim, int(w * (max_dim / h))
-    return img.resize((new_w, new_h), Image.BICUBIC)
+def run_obsidian(image_path: str, prompt: str):
+    from llama_cpp import Llama
+    from llama_cpp.llama_chat_format import Llava15ChatHandler
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python main.py <image_path> [optional prompt]")
-        raise SystemExit(1)
+    gguf = os.environ.get("OBS_GGUF")
+    mmproj = os.environ.get("OBS_MMPROJ")
+    if not gguf or not mmproj:
+        print("Set OBS_GGUF and OBS_MMPROJ to your Obsidian *.gguf and projector *.gguf files.")
+        raise SystemExit(2)
 
-    image_path = sys.argv[1]
-    prompt = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else None
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    dtype = torch.float16 if device == "cuda" else torch.float32
-
-    # ---- VRAM cap settings ----
-    # How much VRAM to allow this *process* to use (GiB). Default <8 to leave headroom.
-    vram_gb = float(os.environ.get("VLM_VRAM_GB", "7.5"))  # change to "7.8" if you want tighter/looser
-    max_dim = int(os.environ.get("VLM_MAX_IMAGE_DIM", "1024"))  # optional image downscale cap
-
-    model_kwargs = dict(
-        trust_remote_code=True,
-        torch_dtype=dtype,
-        low_cpu_mem_usage=True,
+    chat_handler = Llava15ChatHandler(clip_model_path=mmproj)
+    llm = Llama(
+        model_path=gguf,
+        chat_handler=chat_handler,
+        n_ctx=2048,          # per docs: increase context so the prompt fits
+        # n_gpu_layers=-1,   # uncomment if you built with CUDA
+        verbose=False,
     )
 
-    if device == "cuda":
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.benchmark = True
+    messages = [{
+        "role": "user",
+        "content": [
+            {"type": "text", "text": prompt or "Describe this image."},
+            {"type": "image_url", "image_url": {"url": f"file://{os.path.abspath(image_path)}"}},
+        ],
+    }]
+    out = llm.create_chat_completion(messages=messages, max_tokens=64, temperature=0.0)
+    print(out["choices"][0]["message"]["content"].strip())
 
-        # Soft cap the CUDA caching allocator to a fraction of total VRAM
-        total = torch.cuda.get_device_properties(0).total_memory  # bytes
-        cap_bytes = int(vram_gb * (1024 ** 3))
-        frac = min(0.98, max(0.05, cap_bytes / total))
-        torch.cuda.set_per_process_memory_fraction(frac, 0)
+def run_moondream(image_path: str, prompt: str):
+    import torch
+    from transformers import AutoModelForCausalLM
 
-        # Also tell 🤗 Accelerate/Transformers not to exceed this cap when placing weights
-        # NOTE: when using device_map/max_memory, DO NOT call .to("cuda") on the model.
-        model_kwargs.update(
-            device_map="auto",
-            max_memory={0: f"{vram_gb}GiB", "cpu": "8GiB"},
-        )
+    img = Image.open(image_path).convert("RGB")
+    model = AutoModelForCausalLM.from_pretrained(
+        "vikhyatk/moondream2",
+        trust_remote_code=True,
+        dtype=(torch.float16 if torch.cuda.is_available() else torch.float32),
+    ).eval()
 
-    # ---- Load model ----
-    model = AutoModelForCausalLM.from_pretrained(MODEL_ID, **model_kwargs).eval()
+    if prompt and prompt.strip():
+        out = model.query(img, prompt.strip())     # minimal/fast
+        print(out.get("answer", "").strip())
+    else:
+        out = model.caption(img, length="short")
+        print(out.get("caption", "").strip())
 
-    # ---- Load & optionally downscale image (saves VRAM/compute) ----
-    image = Image.open(image_path).convert("RGB")
-    image = downscale_max_dim(image, max_dim)
+def main():
+    if len(sys.argv) < 5 or sys.argv[1] != "--backend" or sys.argv[3] != "--image":
+        usage()
 
-    # ---- Inference ----
+    backend = sys.argv[2].lower()
+    image_path = sys.argv[4]
+    prompt = " ".join(sys.argv[5:]) if len(sys.argv) > 5 else "Describe this image."
+
+    # quick file check
     try:
-        with torch.inference_mode():
-            if prompt:
-                out = model.query(image, prompt)   # {"answer": "..."}
-                text = out.get("answer", "")
-            else:
-                out = model.caption(image, length="normal")  # {"caption": "..."}
-                text = out.get("caption", "")
-        print(text.strip())
-    except RuntimeError as e:
-        msg = str(e)
-        if "CUDA out of memory" in msg:
-            print(
-                "[OOM] CUDA ran out of memory.\n"
-                f"- Current cap: {vram_gb} GiB (env VLM_VRAM_GB).\n"
-                "- Try lowering VLM_VRAM_GB, reducing VLM_MAX_IMAGE_DIM (e.g., 768 or 640),\n"
-                "- closing other GPU apps, or using a shorter caption length.\n"
-            )
-        raise
+        Image.open(image_path).close()
+    except Exception as e:
+        raise SystemExit(f"Bad --image path: {e}")
 
-    # ---- Quick memory summary (optional) ----
-    if device == "cuda":
-        torch.cuda.synchronize()
-        alloc = torch.cuda.memory_allocated(0) / (1024 ** 2)
-        reserved = torch.cuda.memory_reserved(0) / (1024 ** 2)
-        print(f"[MEM] allocated={alloc:.1f} MiB, reserved={reserved:.1f} MiB (cap ~{vram_gb} GiB)")
+    if backend == "obsidian":
+        run_obsidian(image_path, prompt)
+    elif backend == "moondream":
+        run_moondream(image_path, prompt)
+    else:
+        usage()
 
 if __name__ == "__main__":
     main()
-
