@@ -1,6 +1,8 @@
 #Model files
-.models/
 *.gguf
+*mmproj*.gguf
+.models/
+models/
 
 # --- Python basics ---
 __pycache__/
