@@ -23,5 +23,5 @@ pip3 install --force torchaudio-2.8.0-cp310-cp310-linux_aarch64.whl
 ```
 ## sample img
 ```bash
-wget https://www.pawlovetreats.com/cdn/shop/articles/pembroke-welsh-corgi-puppy_1000x.jpg?v=1628638716
+wget https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?cs=srgb&dl=pexels-chevanon-1108099.jpg&fm=jpg
 ```
