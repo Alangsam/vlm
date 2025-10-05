@@ -66,6 +66,8 @@ export BUILD_VERSION=0.20.0
 python3 setup.py install --user # remove --user if installing in virtualenv
 
 
+pip install http://jetson.webredirect.org/jp6/cu126/+f/5f9/67f920de3953f/torchvision-0.20.0-cp310-cp310-linux_aarch64.whl#sha256=5f967f920de3953f2a39d95154b1feffd5ccc06b4589e51540dc070021a9adb9
+
 ```
 ## sample img
 ```bash
