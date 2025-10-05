@@ -21,6 +21,52 @@ pip3 install --force torch-2.8.0-cp310-cp310-linux_aarch64.whl
 pip3 install --force torchvision-0.23.0-cp310-cp310-linux_aarch64.whl 
 pip3 install --force torchaudio-2.8.0-cp310-cp310-linux_aarch64.whl 
 ```
+##cusparselt
+```bash
+#!/bin/bash
+
+set -ex
+
+# cuSPARSELt license: https://docs.nvidia.com/cuda/cusparselt/license.html
+
+CUSPARSELT_URL="https://developer.download.nvidia.com/compute/cusparselt/redist/libcusparse_lt/linux-aarch64"
+CUSPARSELT_VERSION="0.7.1.0"
+CUSPARSELT_NAME="libcusparse_lt-linux-aarch64-${CUSPARSELT_VERSION}-archive"
+
+# Create and enter temp working directory
+mkdir -p tmp_cusparselt && cd tmp_cusparselt
+
+# Download the archive
+curl --retry 3 -OLs "${CUSPARSELT_URL}/${CUSPARSELT_NAME}.tar.xz"
+
+# Extract the archive
+tar xf "${CUSPARSELT_NAME}.tar.xz"
+
+# Install headers and libraries
+cp -a "${CUSPARSELT_NAME}/include/"* /usr/local/cuda/include/
+cp -a "${CUSPARSELT_NAME}/lib/"* /usr/local/cuda/lib64/
+
+# Clean up
+cd ..
+rm -rf tmp_cusparselt
+
+# Update linker cache
+ldconfig
+```
+
+##test
+```bash
+pip3 install --no-cache https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
+
+
+sudo apt-get install libjpeg-dev zlib1g-dev libpython3-dev libopenblas-dev libavcodec-dev libavformat-dev libswscale-dev
+git clone --branch release/0.20 https://github.com/pytorch/vision torchvision
+cd torchvision
+export BUILD_VERSION=0.20.0
+python3 setup.py install --user # remove --user if installing in virtualenv
+
+
+```
 ## sample img
 ```bash
 wget "https://media.istockphoto.com/id/636475496/photo/portrait-of-brown-puppy-with-bokeh-background.jpg?s=612x612&w=0&k=20&c=Ot63dQOYplm0kLJdlSVWbtKGwGkuZfnfdwH5ry9a6EQ="
