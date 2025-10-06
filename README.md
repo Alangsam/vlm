@@ -19,7 +19,12 @@ wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/1c0/3de08a69e9554/torchvision-0.
 wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/de1/5388b8f70e4e1/torchaudio-2.8.0-cp310-cp310-linux_aarch64.whl#sha256=de15388b8f70e4e17a05b23a4ae1f55a288c91449371bb8aeeb69184d40be17f
 pip3 install --force torch-2.8.0-cp310-cp310-linux_aarch64.whl 
 pip3 install --force torchvision-0.23.0-cp310-cp310-linux_aarch64.whl 
-pip3 install --force torchaudio-2.8.0-cp310-cp310-linux_aarch64.whl 
+pip3 install --force torchaudio-2.8.0-cp310-cp310-linux_aarch64.whl
+
+link cuda tools:
+$ export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
+$ export LD_LIBRARY_PATH=/usr/local/cuda/lib64\
+                         ${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 ```
 ##cusparselt
 ```bash
