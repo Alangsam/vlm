@@ -8,8 +8,8 @@ Quick GPU checks and simple scripts for running small vision-language models.
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 pip install transformers pillow accelerate safetensors
+sudo apt-get install libjpeg-dev zlib1g-dev libpython3-dev libopenblas-dev libavcodec-dev libavformat-dev libswscale-dev
 ```
 ## for jetson
 ```bash
@@ -17,8 +17,8 @@ pip3 install 'numpy<2'
 wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/590/92ab729aee2b8/torch-2.8.0-cp310-cp310-linux_aarch64.whl#sha256=59092ab729aee2b8937d80cc1b35d1128275bd02a7e1bc911e7efa375bd97226 
 wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/1c0/3de08a69e9554/torchvision-0.23.0-cp310-cp310-linux_aarch64.whl#sha256=1c03de08a69e95542024477e0cde95fab3436804917133d3f00e67629d3fe902
 wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/de1/5388b8f70e4e1/torchaudio-2.8.0-cp310-cp310-linux_aarch64.whl#sha256=de15388b8f70e4e17a05b23a4ae1f55a288c91449371bb8aeeb69184d40be17f
-pip3 install --force torch-2.8.0-cp310-cp310-linux_aarch64.whl 
-pip3 install --force torchvision-0.23.0-cp310-cp310-linux_aarch64.whl 
+pip3 install torch-2.8.0-cp310-cp310-linux_aarch64.whl 
+pip3 install torchvision-0.23.0-cp310-cp310-linux_aarch64.whl 
 pip3 install --force torchaudio-2.8.0-cp310-cp310-linux_aarch64.whl
 
 link cuda tools:
@@ -46,7 +46,7 @@ for name in ["libcuda.so.1","libcudart.so.12","libcublas.so.12","libcudnn.so.9",
         print("MISSING:", name, "->", e)
 PY
 ```
-##cusparselt
+##cusparselt-save to file and run
 ```bash
 #!/bin/bash
 
@@ -79,26 +79,14 @@ rm -rf tmp_cusparselt
 ldconfig
 ```
 
-##test
+##fix missing cudSS
 ```bash
-pip3 install --no-cache https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
 
-
-sudo apt-get install libjpeg-dev zlib1g-dev libpython3-dev libopenblas-dev libavcodec-dev libavformat-dev libswscale-dev
-git clone --branch release/0.20 https://github.com/pytorch/vision torchvision
-cd torchvision
-export BUILD_VERSION=0.20.0
-python3 setup.py install --user # remove --user if installing in virtualenv
-
-
-pip install http://jetson.webredirect.org/jp6/cu126/+f/5f9/67f920de3953f/torchvision-0.20.0-cp310-cp310-linux_aarch64.whl#sha256=5f967f920de3953f2a39d95154b1feffd5ccc06b4589e51540dc070021a9adb9
-
-wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/6ef/f643c0a7acda9/torch-2.7.0-cp310-cp310-linux_aarch64.whl#sha256=6eff643c0a7acda92734cc798338f733ff35c7df1a4434576f5ff7c66fc97319
-wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/daa/bff3a07259968/torchvision-0.22.0-cp310-cp310-linux_aarch64.whl#sha256=daabff3a0725996886b92e4b5dd143f5750ef4b181b5c7d01371a9185e8f0402
-
-
+# alternative download sources
 wget https://nvidia.box.com/shared/static/mp164asf3sceb570wvjsrezk1p4ftj8t.whl
 wget https://nvidia.box.com/shared/static/xpr06qe6ql3l6rj22cu3c45tz1wzi36p.whl
+
+
 
 wget https://developer.download.nvidia.com/compute/cudss/0.6.0/local_installers/cudss-local-tegra-repo-ubuntu2204-0.6.0_0.6.0-1_arm64.deb
 sudo dpkg -i cudss-local-tegra-repo-ubuntu2204-0.6.0_0.6.0-1_arm64.deb
