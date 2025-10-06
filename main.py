@@ -14,7 +14,7 @@ import os, sys
 from PIL import Image
 
 def usage():
-    print("Usage: python main.py --backend {obsidian|moondream} --image <path> [prompt]")
+    print("Usage: python main.py --backend {obsidian|moondream} --image <path> --maxtokens <num> [prompt]")
     raise SystemExit(1)
 
 def run_obsidian(image_path: str, prompt: str):
