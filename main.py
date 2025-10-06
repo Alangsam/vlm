@@ -71,17 +71,22 @@ def run_moondream(image_path: str, prompt: str, max_tokens: str):
         out = model.query(img, prompt.strip(), settings)     # minimal/fast
         print(out.get("answer", "").strip())
     else:
-        out = model.caption(img, settings, length="short")
-        print(out.get("caption", "").strip())
+        #print("hello")
+        for t in model.caption(img, length="short", stream=True )["caption"]:
+            print(t, end="", flush=True)
+        print("\n")
+        
+        # out = model.caption(img, settings, length="short")
+        # print(out.get("caption", "").strip())
 
 def main():
     if len(sys.argv) < 5 or sys.argv[1] != "--backend" or sys.argv[3] != "--image" or sys.argv[5] != "--maxtokens":
         usage()
-    print(sys.argv)
+    #print(sys.argv)
     backend = sys.argv[2].lower()
     image_path = sys.argv[4]
     max_tokens = sys.argv[6]
-    prompt = " ".join(sys.argv[7:]) if len(sys.argv) > 7 else "Describe this image."
+    prompt = " ".join(sys.argv[7:])
 
     # quick file check
     try:
