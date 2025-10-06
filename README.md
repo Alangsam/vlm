@@ -2,7 +2,7 @@
 
 Quick GPU checks and simple scripts for running small vision-language models.
 
-## Setup
+## Setup (transformers method)
 
 ```bash
 python3 -m venv .venv
