@@ -1,14 +1,14 @@
 # main.py — minimal runners (exactly one simple path for each backend)
 # Usage:
 #   python main.py --backend obsidian --image <path> "prompt"
-#   python main.py --backend moondream --image <path> "prompt"
+#   python main.py --backend moondream --image <path> --maxtokens <num> "prompt"
 #
 # Requirements:
 #   pip install pillow
 #   For Obsidian: pip install llama-cpp-python
 #                 export OBS_GGUF=/abs/path/to/obsidian-*.gguf
 #                 export OBS_MMPROJ=/abs/path/to/mmproj-obsidian-f16.gguf
-#   For Moondream: pip install torch transformers safetensors
+#   For Moondream: pip install torch transformers safetensors, etc. from readme
 
 import os, sys
 from PIL import Image
@@ -46,7 +46,7 @@ def run_obsidian(image_path: str, prompt: str):
     out = llm.create_chat_completion(messages=messages, max_tokens=64, temperature=0.0)
     print(out["choices"][0]["message"]["content"].strip())
 
-def run_moondream(image_path: str, prompt: str):
+def run_moondream(image_path: str, prompt: str, max_tokens: str):
     import torch
     from transformers import AutoModelForCausalLM
 
@@ -64,21 +64,24 @@ def run_moondream(image_path: str, prompt: str):
         dtype=(torch.float16 if torch.cuda.is_available() else torch.float32),
         device_map="cuda"
     ).eval()
+    settings = {"max_tokens": max_tokens}
+    # print(max_tokens)
 
     if prompt and prompt.strip():
-        out = model.query(img, prompt.strip())     # minimal/fast
+        out = model.query(img, prompt.strip(), settings)     # minimal/fast
         print(out.get("answer", "").strip())
     else:
-        out = model.caption(img, length="short")
+        out = model.caption(img, settings, length="short")
         print(out.get("caption", "").strip())
 
 def main():
-    if len(sys.argv) < 5 or sys.argv[1] != "--backend" or sys.argv[3] != "--image":
+    if len(sys.argv) < 5 or sys.argv[1] != "--backend" or sys.argv[3] != "--image" or sys.argv[5] != "--maxtokens":
         usage()
-
+    print(sys.argv)
     backend = sys.argv[2].lower()
     image_path = sys.argv[4]
-    prompt = " ".join(sys.argv[5:]) if len(sys.argv) > 5 else "Describe this image."
+    max_tokens = sys.argv[6]
+    prompt = " ".join(sys.argv[7:]) if len(sys.argv) > 7 else "Describe this image."
 
     # quick file check
     try:
@@ -89,7 +92,7 @@ def main():
     if backend == "obsidian":
         run_obsidian(image_path, prompt)
     elif backend == "moondream":
-        run_moondream(image_path, prompt)
+        run_moondream(image_path, prompt, max_tokens)
     else:
         usage()
 
