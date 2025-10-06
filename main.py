@@ -8,6 +8,7 @@
 #   For Obsidian: pip install llama-cpp-python
 #                 export OBS_GGUF=/abs/path/to/obsidian-*.gguf
 #                 export OBS_MMPROJ=/abs/path/to/mmproj-obsidian-f16.gguf
+#                 [optional] export OBS_N_GPU_LAYERS=-1  # defaults to -1 for NVIDIA offload
 #   For Moondream: pip install torch transformers safetensors, etc. from readme
 
 import os, sys
@@ -28,13 +29,34 @@ def run_obsidian(image_path: str, prompt: str):
         raise SystemExit(2)
 
     chat_handler = Llava15ChatHandler(clip_model_path=mmproj)
-    llm = Llama(
+
+    n_gpu_layers_env = os.environ.get("OBS_N_GPU_LAYERS")
+    if n_gpu_layers_env is not None:
+        try:
+            n_gpu_layers = int(n_gpu_layers_env)
+        except ValueError:
+            raise SystemExit("OBS_N_GPU_LAYERS must be an integer")
+    else:
+        n_gpu_layers = -1  # request full GPU offload when llama.cpp was built with CUDA
+
+    llama_kwargs = dict(
         model_path=gguf,
         chat_handler=chat_handler,
         n_ctx=2048,          # per docs: increase context so the prompt fits
-        # n_gpu_layers=-1,   # uncomment if you built with CUDA
+        n_gpu_layers=n_gpu_layers,
         verbose=False,
     )
+
+    try:
+        llm = Llama(**llama_kwargs)
+    except ValueError as err:
+        err_text = str(err).lower()
+        if n_gpu_layers != 0 and ("cuda" in err_text or "cublas" in err_text or "gpu" in err_text):
+            print("Warning: llama.cpp was built without GPU support; retrying on CPU.")
+            llama_kwargs["n_gpu_layers"] = 0
+            llm = Llama(**llama_kwargs)
+        else:
+            raise
 
     messages = [{
         "role": "user",
