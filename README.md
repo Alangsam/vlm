@@ -116,9 +116,13 @@ python main.py --backend moondream --image ./samples/cute_dog.jpg --maxtokens 20
 ## Setup (Model && Prjector files method)
 
 ```bash
-pip install llama-cpp-python
+CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
 python init_models.py
 ```
+
+### helpful links
+
+llama-cpp-python repo: github.com/abetlen/llama-cpp-python
 
 ## Example run
 
