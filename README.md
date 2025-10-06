@@ -11,7 +11,7 @@ python -m pip install --upgrade pip
 pip install transformers pillow accelerate safetensors
 sudo apt-get install libjpeg-dev zlib1g-dev libpython3-dev libopenblas-dev libavcodec-dev libavformat-dev libswscale-dev
 ```
-## for jetson
+### for jetson
 ```bash
 pip3 install 'numpy<2'
 wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/590/92ab729aee2b8/torch-2.8.0-cp310-cp310-linux_aarch64.whl#sha256=59092ab729aee2b8937d80cc1b35d1128275bd02a7e1bc911e7efa375bd97226 
@@ -27,7 +27,7 @@ $ export LD_LIBRARY_PATH=/usr/local/cuda/lib64\
                          ${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 ```
 
-## troubleshooting cpu only
+### troubleshooting cpu only
 ```bash
 
 python - <<'PY'
@@ -46,7 +46,7 @@ for name in ["libcuda.so.1","libcudart.so.12","libcublas.so.12","libcudnn.so.9",
         print("MISSING:", name, "->", e)
 PY
 ```
-##cusparselt-save to file and run
+### cusparselt-save to file and run
 ```bash
 #!/bin/bash
 
@@ -79,7 +79,7 @@ rm -rf tmp_cusparselt
 ldconfig
 ```
 
-##fix missing cudSS
+### fix missing cudSS
 ```bash
 
 # alternative download sources
@@ -94,7 +94,12 @@ sudo cp /var/cudss-local-tegra-repo-ubuntu2204-0.6.0/cudss-*-keyring.gpg /usr/sh
 sudo apt-get update
 sudo apt-get -y install cudss
 ```
-## sample img
+### sample img
 ```bash
 wget "https://media.istockphoto.com/id/636475496/photo/portrait-of-brown-puppy-with-bokeh-background.jpg?s=612x612&w=0&k=20&c=Ot63dQOYplm0kLJdlSVWbtKGwGkuZfnfdwH5ry9a6EQ="
+```
+
+## Example Run
+```bash
+python main.py --backend moondream --image ./samples/cute_dog.jpg
 ```
