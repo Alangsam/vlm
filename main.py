@@ -50,11 +50,19 @@ def run_moondream(image_path: str, prompt: str):
     import torch
     from transformers import AutoModelForCausalLM
 
+
+    # bnb = BitsAndBytesConfig(
+    #     load_in_4bit=True,
+    #     bnb_4bit_use_double_quant=True,
+    #     bnb_4bit_quant_type="nf4",
+    #     bnb_4bit_compute_dtype=torch.float16,
+    # )
     img = Image.open(image_path).convert("RGB")
     model = AutoModelForCausalLM.from_pretrained(
         "vikhyatk/moondream2",
         trust_remote_code=True,
         dtype=(torch.float16 if torch.cuda.is_available() else torch.float32),
+        device_map="cuda"
     ).eval()
 
     if prompt and prompt.strip():
