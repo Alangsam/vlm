@@ -48,7 +48,7 @@ def run_obsidian(image_path: str, prompt: str):
     )
 
     try:
-        llm = Llama(**llama_kwargs, verbose=True)
+        llm = Llama(**llama_kwargs)
     except ValueError as err:
         err_text = str(err).lower()
         if n_gpu_layers != 0 and ("cuda" in err_text or "cublas" in err_text or "gpu" in err_text):
@@ -66,8 +66,17 @@ def run_obsidian(image_path: str, prompt: str):
         ],
     }]
     out = llm.create_chat_completion(messages=messages, max_tokens=64, temperature=0.0)
-    print(out)
-    # print(out["choices"][0]["message"]["content"].strip())
+
+    message = out["choices"][0]["message"]
+    content = message.get("content", "")
+    if isinstance(content, list):
+        content = "".join(
+            block.get("text", "")
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "text"
+        )
+
+    print((content or "").strip())
 
 def run_moondream(image_path: str, prompt: str, max_tokens: str):
     import torch

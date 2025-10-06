@@ -118,6 +118,7 @@ python main.py --backend moondream --image ./samples/cute_dog.jpg --maxtokens 20
 ```bash
 CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
 python init_models.py
+export OBS_N_GPU_LAYERS=-1
 ```
 
 ### helpful links
