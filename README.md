@@ -26,6 +26,26 @@ $ export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
 $ export LD_LIBRARY_PATH=/usr/local/cuda/lib64\
                          ${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 ```
+
+## troubleshooting cpu only
+```bash
+
+python - <<'PY'
+import os, ctypes, sys
+import torch
+print("torch:", torch.__version__)
+print("torch.version.cuda:", torch.version.cuda)              # None => CPU-only build
+print("torch.backends.cuda.is_built():", torch.backends.cuda.is_built())
+print("torch.cuda.is_available():", torch.cuda.is_available())
+print("cudnn available:", torch.backends.cudnn.is_available())
+print("env LD_LIBRARY_PATH:", os.environ.get("LD_LIBRARY_PATH"))
+for name in ["libcuda.so.1","libcudart.so.12","libcublas.so.12","libcudnn.so.9","libcudss.so.0"]:
+    try:
+        ctypes.CDLL(name); print("loaded:", name)
+    except OSError as e:
+        print("MISSING:", name, "->", e)
+PY
+```
 ##cusparselt
 ```bash
 #!/bin/bash
