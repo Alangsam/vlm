@@ -18,6 +18,67 @@ def usage():
     print("Usage: python main.py --backend {obsidian|moondream} --image <path> --maxtokens <num> [prompt]")
     raise SystemExit(1)
 
+def run_model_with_cpp(model: str, image_path: str, prompt: str, maxtokens:str):
+    from llama_cpp import Llama
+    from llama_cpp.llama_chat_format import Llava15ChatHandler
+    #logic to enumerate .models folder to check if model requested has already been downloaded, and if not
+    #show available models, and explain how to use ini_models
+    
+    models = []
+    for name in os.listdir("./.models"):
+        models.append(name)
+    if model not in models:
+        print(f'\n{model} not found. Check for typos\n')
+        print(f'You wrote: {model}, but we only found: {models}\n')
+        print(f'If you need to download a model\'s files, use init_models.py')
+        raise SystemExit(1)
+    # prompt user to then choose which model file is the actual modelfile(params+weights)
+    # and which is the actual projector file 
+    # (helps because user may want multiple versions of a model for testing)
+    print("Please select which of the following is the model file, and which is projector file:")
+    model_files = [name for name in os.listdir(f'./.models/{model}')]
+    for idx, name in enumerate(model_files):
+        print(f'[{idx}] {name}')
+    
+    def ask(label: str) -> str:
+        while True:
+            try:
+                choice = int(input(f'Enter the index for the {label}: ').strip())
+                return f'./.models/{model}/{model_files[choice]}'
+            except (ValueError, IndexError):
+                print("Invalid selection, please try again")
+    
+    model_path = ask("model file")
+    projector_path = ask("projector file")
+    #print(model_path,projector_path)
+    chat_handler = Llava15ChatHandler(clip_model_path=projector_path)
+    llm = Llama(
+        model_path=model_path,
+        n_gpu_layers=-1,
+        chat_handler=chat_handler,
+        # seed=1337,
+        n_ctx=2048,
+    )
+    out = llm.create_chat_completion(
+        messages= [
+            {"role": "system", "content": "You are an assisstant who perfectly describes images."},
+            {
+                "role": "user",
+                "content": [
+                    {"type" : "text", "text" : prompt},
+                    {"type" : "image_url" , "image_url" : {"url": f"file://{os.path.abspath(image_path)}"},}
+                ]
+            }
+        ],
+        max_tokens=int(maxtokens),
+        temperature=0.1,
+        stop=["\n### <|im_start|>", "\n<|im_end|>", "</s>"],
+        #stream=True
+    )
+    print(out["choices"][0]["message"]["content"])
+
+
+
 def run_obsidian(image_path: str, prompt: str):
     from llama_cpp import Llama
     from llama_cpp.llama_chat_format import Llava15ChatHandler
@@ -120,14 +181,15 @@ def main():
     max_tokens = sys.argv[6]
     prompt = " ".join(sys.argv[7:])
 
+    # run_model_with_cpp(backend,image_path,prompt,max_tokens)
     # quick file check
-    try:
-        Image.open(image_path).close()
-    except Exception as e:
-        raise SystemExit(f"Bad --image path: {e}")
+    # try:
+    #     Image.open(image_path).close()
+    # except Exception as e:
+    #     raise SystemExit(f"Bad --image path: {e}")
 
     if backend == "obsidian":
-        run_obsidian(image_path, prompt)
+        run_model_with_cpp(backend,image_path,prompt,max_tokens)
     elif backend == "moondream":
         run_moondream(image_path, prompt, max_tokens)
     else:
