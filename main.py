@@ -212,7 +212,7 @@ def run_llava(image_path: str, prompt: str, max_tokens: str):
     # Converts floating tensors to FP16 to cut memory roughly in half (help with Jetson Orin Nano)
     if torch.cuda.is_available():
         inputs = {k: (v.to("cuda") if torch.is_tensor(v) else v) for k, v in inputs.items()}
-        _cast_fp16_inplace(inputs)
+        #_cast_fp16_inplace(inputs)
 
     with torch.inference_mode():
         out_ids = model.generate(
