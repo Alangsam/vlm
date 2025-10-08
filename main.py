@@ -2,6 +2,8 @@
 # Usage:
 #   python main.py --backend obsidian --image <path> "prompt"
 #   python main.py --backend moondream --image <path> --maxtokens <num> "prompt"
+# New backends added: llava(tiny 0.5B for now)
+#   python main.py --backend llava --image <path> --prompt --maxtokens
 #
 # Requirements:
 #   pip install pillow
@@ -12,10 +14,15 @@
 #   For Moondream: pip install torch transformers safetensors, etc. from readme
 
 import os, sys
+import argparse
+import torch
+
 from PIL import Image
+from transformers import AutoProcessor
+
 
 def usage():
-    print("Usage: python main.py --backend {obsidian|moondream} --image <path> --maxtokens <num> [prompt]")
+    print("Usage: python main.py --backend {obsidian|moondream|llava} --image <path> --maxtokens <num> [prompt]")
     raise SystemExit(1)
 
 def run_model_with_cpp(model: str, image_path: str, prompt: str, maxtokens:str):
@@ -172,6 +179,52 @@ def run_moondream(image_path: str, prompt: str, max_tokens: str):
         # out = model.caption(img, settings, length="short")
         # print(out.get("caption", "").strip())
 
+# Making sure that LLaVA doesn't run out of memory (Comment this function out if not needed)
+#def _cast_fp16_inplace(inputs: dict):
+#    """Cast float tensors to fp16 to save VRAM on Jetson."""
+#    for k, v in inputs.items():
+        # check each item that the processor returns (image tensors, text embeddings, etc.)
+#        if torch.is_tensor(v) and v.is_floating_point():
+            # if it’s a floating-point tensor, move it to half precision (FP16), help with cutting memory use roughly by half  
+#            inputs[k] = v.to(torch.float16 if torch.cuda.is_available() else v.dtype)
+            
+# Added new backend: LLaaVA
+def run_llava(image_path: str, prompt: str, max_tokens: str):
+#Uses llava-hf/llava-onevision-qwen2-0.5b-ov via Transformers.
+
+    from transformers import LlavaForConditionalGeneration
+
+    # Open with Pillow and ensure 3 channels
+    img = Image.open(image_path).convert("RGB")
+    model_id = "llava-hf/llava-onevision-qwen2-0.5b-ov"
+    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+    model = LlavaForConditionalGeneration.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        low_cpu_mem_usage=True,
+        torch_dtype=(torch.float16 if torch.cuda.is_available() else torch.float32),
+        device_map="cuda" if torch.cuda.is_available() else None,
+    ).eval()
+
+    user_prompt = (prompt or "Describe this image.").strip()
+    inputs = processor(images=img, text=user_prompt, return_tensors="pt")
+    # Move to GPU if available
+    # Converts floating tensors to FP16 to cut memory roughly in half (help with Jetson Orin Nano)
+    if torch.cuda.is_available():
+        inputs = {k: (v.to("cuda") if torch.is_tensor(v) else v) for k, v in inputs.items()}
+        _cast_fp16_inplace(inputs)
+
+    with torch.inference_mode():
+        out_ids = model.generate(
+            **inputs,
+            max_new_tokens=int(max_tokens),
+            do_sample=False,
+            temperature=0.0,
+        )
+ 
+    text = processor.batch_decode(out_ids, skip_special_tokens=True)[0]
+    print(text.replace(user_prompt, "").strip())
+
 def main():
     if len(sys.argv) < 5 or sys.argv[1] != "--backend" or sys.argv[3] != "--image" or sys.argv[5] != "--maxtokens":
         usage()
@@ -192,6 +245,9 @@ def main():
         run_model_with_cpp(backend,image_path,prompt,max_tokens)
     elif backend == "moondream":
         run_moondream(image_path, prompt, max_tokens)
+    # Added elif for llava 
+    elif backend == "llava":
+        run_llava(image_path, prompt, max_tokens)
     else:
         usage()
 
