@@ -190,10 +190,8 @@ def run_moondream(image_path: str, prompt: str, max_tokens: str):
             
 # Added new backend: LLaaVA
 def run_llava(image_path: str, prompt: str, max_tokens: str):
-    """
-    Uses llava-hf/llava-onevision-qwen2-0.5b-ov via Transformers.
-    Prints output (same behavior style as existing functions).
-    """
+#Uses llava-hf/llava-onevision-qwen2-0.5b-ov via Transformers.
+
     from transformers import LlavaForConditionalGeneration
 
     # Open with Pillow and ensure 3 channels
