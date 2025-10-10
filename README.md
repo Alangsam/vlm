@@ -121,6 +121,17 @@ python init_models.py
 export OBS_N_GPU_LAYERS=-1
 ```
 
+## Setup rpi v2 camera:
+```bash
+# You must configure the CSI ports.
+
+# In terminal, run
+sudo /opt/nvidia/jetson-io/jetson-io.py
+select configure jetson 24pin CSI connector
+select Camera IMX219 DUal OR Camera IMX219-A ( i used A)
+save and reboot
+```
+
 ### helpful links
 
 llama-cpp-python repo: github.com/abetlen/llama-cpp-python
