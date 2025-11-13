@@ -3,6 +3,10 @@
 *mmproj*.gguf
 .models/
 models/
+#wheels n things
+*.whl
+*.deb
+
 
 # --- Python basics ---
 __pycache__/
