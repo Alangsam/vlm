@@ -181,7 +181,7 @@ def run_moondream(image_path: str, prompt: str, max_tokens: str):
     #     bnb_4bit_compute_dtype=torch.float16,
     # )
     img = Image.open(image_path).convert("RGB")
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained("vikhyatk/moondream2", trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(
         "vikhyatk/moondream2",
         trust_remote_code=True,
